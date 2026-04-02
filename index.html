@@ -2,290 +2,211 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#fdf4f8">
 <title>Personal Expenses</title>
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #fdf4f8;
-    --surface: #ffffff;
-    --surface2: #fce8f3;
-    --border: #f0c4de;
-    --accent: #e0529a;
-    --accent2: #b83b7e;
-    --success: #22c55e;
-    --error: #ef4444;
-    --warning: #f59e0b;
-    --text: #3d1a2e;
-    --text2: #9b6b84;
-    --mono: 'IBM Plex Mono', monospace;
-    --sans: 'Sarabun', sans-serif;
-  }
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap');
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:      #fdf4f8;
+  --card:    #ffffff;
+  --card2:   #fce8f3;
+  --border:  #f0c4de;
+  --border2: #e8a0cc;
+  --pink:    #e0529a;
+  --pink2:   #b83b7e;
+  --green:   #22c55e;
+  --yellow:  #f59e0b;
+  --red:     #ef4444;
+  --text:    #3d1a2e;
+  --text2:   #9b6b84;
+  --text3:   #c4a0b8;
+  --mono:    'JetBrains Mono', monospace;
+  --sans:    'Sarabun', sans-serif;
+}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--sans);
-    min-height: 100vh;
-    padding: 20px 16px 40px;
-  }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-tap-highlight-color: transparent; }
 
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: radial-gradient(circle at 20% 20%, rgba(224,82,154,0.06) 0%, transparent 50%),
-                      radial-gradient(circle at 80% 80%, rgba(184,59,126,0.06) 0%, transparent 50%);
-    pointer-events: none;
-    z-index: 0;
-  }
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  padding-bottom: env(safe-area-inset-bottom, 24px);
+  overflow-x: hidden;
+}
 
-  .container { max-width: 680px; margin: 0 auto; position: relative; z-index: 1; }
+/* ─── PIN ─────────────────────────────────────────────────── */
+#pinScreen {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 32px 24px;
+}
+.pin-logo {
+  font-size: 52px; margin-bottom: 18px;
+}
+.pin-title  { font-size: 20px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+.pin-sub    { font-size: 13px; color: var(--text2); margin-bottom: 8px; text-align: center; }
+.pin-step   { font-size: 11px; font-family: var(--mono); color: var(--pink); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 24px; min-height: 16px; text-align: center; }
+.pin-dots   { display: flex; gap: 14px; margin-bottom: 30px; }
+.pin-dot    { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--border2); background: transparent; transition: all .15s; }
+.pin-dot.filled { background: var(--pink); border-color: var(--pink); transform: scale(1.1); }
+.pin-dot.error  { background: var(--red); border-color: var(--red); animation: shake .35s ease; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
 
-  header {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 24px;
-    padding-bottom: 18px;
-    border-bottom: 2px solid var(--border);
-  }
+.numpad { display: grid; grid-template-columns: repeat(3,72px); grid-template-rows: repeat(4,72px); gap: 12px; }
+.num-btn {
+  width: 72px; height: 72px; border-radius: 50%;
+  background: var(--card); border: 1px solid var(--border);
+  color: var(--text); font-size: 22px; font-weight: 500;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all .12s; font-family: var(--sans); user-select: none;
+}
+.num-btn:active { background: var(--card2); transform: scale(.93); }
+.num-btn.del { background: transparent; border-color: transparent; color: var(--text2); font-size: 18px; }
+.num-btn.empty { visibility: hidden; }
+.pin-err { margin-top: 18px; font-size: 12px; color: var(--red); font-family: var(--mono); min-height: 18px; text-align: center; }
 
-  .logo {
-    width: 46px; height: 46px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border-radius: 14px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 22px; flex-shrink: 0;
-    box-shadow: 0 4px 12px rgba(224,82,154,0.3);
-  }
+#appContent { display: none; }
 
-  header h1 { font-size: 20px; font-weight: 600; color: var(--text); }
-  header p { font-size: 12px; color: var(--text2); margin-top: 2px; }
+/* ─── TOPBAR ──────────────────────────────────────────────── */
+.topbar {
+  position: sticky; top: 0; z-index: 200;
+  background: rgba(253,244,248,0.92);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.topbar-left { display: flex; align-items: center; gap: 10px; }
+.logo {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--pink2), var(--pink));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.topbar h1 { font-size: 15px; font-weight: 600; color: var(--text); }
+.topbar p  { font-size: 11px; color: var(--text2); font-family: var(--mono); }
+.gear-btn {
+  width: 34px; height: 34px; border-radius: 8px;
+  background: var(--card2); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 16px; flex-shrink: 0;
+}
+.gear-btn:active { background: var(--border); }
 
-  .badge {
-    margin-left: auto;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    color: #fff;
-    font-size: 10px;
-    font-family: var(--mono);
-    padding: 4px 10px;
-    border-radius: 20px;
-    letter-spacing: 1px;
-  }
+/* ─── DRAWER ──────────────────────────────────────────────── */
+.drawer-overlay {
+  position: fixed; inset: 0; z-index: 300;
+  background: rgba(61,26,46,.5); backdrop-filter: blur(4px);
+  opacity: 0; pointer-events: none; transition: opacity .25s;
+}
+.drawer-overlay.open { opacity: 1; pointer-events: auto; }
+.drawer {
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: 400;
+  width: min(300px,90vw); background: var(--card);
+  border-left: 1px solid var(--border);
+  transform: translateX(100%); transition: transform .28s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto;
+}
+.drawer.open { transform: translateX(0); }
+.drawer-header {
+  padding: 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; background: var(--card);
+}
+.drawer-header span { font-size: 14px; font-weight: 600; color: var(--text); }
+.drawer-close { width: 28px; height: 28px; border-radius: 6px; background: var(--card2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; color: var(--text2); }
+.drawer-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.field-label { display: block; font-size: 10px; font-family: var(--mono); color: var(--text2); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
+.field-input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; color: var(--text); font-size: 13px; font-family: var(--sans); outline: none; -webkit-appearance: none; transition: border-color .15s; }
+.field-input:focus { border-color: var(--pink); }
+.field-input::placeholder { color: var(--text3); }
+.btn-save { width: 100%; padding: 10px; background: var(--pink); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: var(--sans); cursor: pointer; }
+.btn-pin  { width: 100%; padding: 10px; background: var(--card2); color: var(--text2); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-family: var(--sans); cursor: pointer; margin-top: 4px; }
 
-  /* Upload */
-  .upload-zone {
-    border: 2px dashed var(--border);
-    border-radius: 16px;
-    padding: 36px 20px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    background: var(--surface);
-    position: relative;
-    overflow: hidden;
-  }
+/* ─── MAIN ────────────────────────────────────────────────── */
+.main { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
 
-  .upload-zone:hover, .upload-zone.drag-over {
-    border-color: var(--accent);
-    background: rgba(224,82,154,0.04);
-  }
+.upload-zone {
+  position: relative; background: var(--card);
+  border: 1.5px dashed var(--border2); border-radius: 14px;
+  padding: 28px 20px; text-align: center; cursor: pointer;
+  transition: border-color .2s, background .2s;
+}
+.upload-zone.drag { border-color: var(--pink); background: rgba(224,82,154,.05); }
+.upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+.upload-icon  { font-size: 36px; margin-bottom: 8px; }
+.upload-title { font-size: 15px; font-weight: 600; color: var(--text); }
+.upload-sub   { font-size: 12px; color: var(--text2); margin-top: 4px; }
+.upload-badge { display: inline-block; margin-top: 10px; padding: 3px 12px; border-radius: 999px; background: rgba(224,82,154,.12); border: 1px solid rgba(224,82,154,.3); font-size: 11px; font-family: var(--mono); color: var(--pink); }
 
-  .upload-zone input[type=file] {
-    position: absolute; inset: 0; opacity: 0;
-    cursor: pointer; width: 100%; height: 100%;
-  }
+.section-label { font-size: 10px; font-family: var(--mono); color: var(--text2); text-transform: uppercase; letter-spacing: .08em; display: flex; align-items: center; justify-content: space-between; }
+.badge { background: var(--pink); color: #fff; font-size: 10px; font-weight: 700; font-family: var(--mono); padding: 1px 7px; border-radius: 999px; }
 
-  .upload-icon { font-size: 40px; margin-bottom: 10px; }
-  .upload-zone h2 { font-size: 16px; font-weight: 500; margin-bottom: 6px; color: var(--text); }
-  .upload-zone p { font-size: 12px; color: var(--text2); font-family: var(--mono); }
+.queue-item { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 11px 13px; display: flex; align-items: center; gap: 11px; transition: border-color .2s; }
+.queue-item.processing { border-color: var(--yellow); }
+.queue-item.done       { border-color: var(--green); }
+.queue-item.skipped    { border-color: var(--text3); opacity: .7; }
+.queue-item.error      { border-color: var(--red); }
 
-  /* Queue indicator */
-  .queue-info {
-    display: none;
-    margin-top: 10px;
-    padding: 8px 14px;
-    background: rgba(224,82,154,0.08);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    font-size: 13px;
-    color: var(--accent2);
-    text-align: center;
-  }
+.thumb { width: 42px; height: 42px; border-radius: 7px; background: var(--card2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 20px; overflow: hidden; }
+.thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 7px; }
+.item-body { flex: 1; min-width: 0; }
+.item-name { font-size: 12px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.item-sub  { font-size: 11px; font-family: var(--mono); margin-top: 2px; color: var(--text2); }
+.item-sub.ok   { color: var(--green); }
+.item-sub.warn { color: var(--yellow); }
+.item-sub.err  { color: var(--red); }
+.item-sub.dim  { color: var(--text3); }
 
-  /* Preview */
-  #preview-container { display: none; margin-top: 14px; position: relative; }
-  #preview-img {
-    width: 100%; max-height: 260px; object-fit: contain;
-    border-radius: 12px; border: 1px solid var(--border);
-    background: var(--surface);
-  }
-  .preview-label {
-    position: absolute; top: 8px; left: 8px;
-    background: var(--surface); border: 1px solid var(--border);
-    font-family: var(--mono); font-size: 10px; color: var(--text2);
-    padding: 3px 8px; border-radius: 6px;
-  }
+.dot-status { width: 8px; height: 8px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
+.dot-status.processing { background: var(--yellow); animation: blink 1s infinite; }
+.dot-status.done       { background: var(--green); }
+.dot-status.skipped    { background: var(--text3); }
+.dot-status.error      { background: var(--red); }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
 
-  /* Scan button */
-  .btn-scan {
-    width: 100%; margin-top: 14px; padding: 14px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border: none; border-radius: 12px; color: #fff;
-    font-family: var(--sans); font-size: 15px; font-weight: 600;
-    cursor: pointer; display: none; align-items: center;
-    justify-content: center; gap: 8px; transition: all 0.2s;
-    box-shadow: 0 4px 16px rgba(224,82,154,0.3);
-  }
-  .btn-scan:hover { opacity: 0.92; transform: translateY(-1px); }
-  .btn-scan:active { transform: translateY(0); }
-  .btn-scan:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.summary { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: none; }
+.summary.show { display: block; }
+.summary-title { font-size: 10px; font-family: var(--mono); color: var(--text2); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 12px; }
+.summary-grid  { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+.stat { text-align: center; }
+.stat-n { font-size: 24px; font-weight: 600; font-family: var(--mono); line-height: 1; }
+.stat-n.g { color: var(--green); } .stat-n.y { color: var(--yellow); }
+.stat-n.d { color: var(--text3); } .stat-n.r { color: var(--red); }
+.stat-l { font-size: 10px; color: var(--text2); margin-top: 4px; }
 
-  /* Status */
-  .status-bar {
-    margin-top: 12px; padding: 10px 14px; border-radius: 10px;
-    font-family: var(--mono); font-size: 12px;
-    display: none; align-items: center; gap: 8px;
-  }
-  .status-bar.info { background: rgba(224,82,154,0.08); border: 1px solid rgba(224,82,154,0.2); color: var(--accent); }
-  .status-bar.success { background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); color: var(--success); }
-  .status-bar.error { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); color: var(--error); }
+.fab-wrap { position: sticky; bottom: calc(16px + env(safe-area-inset-bottom,0px)); padding: 0 16px; margin-top: 4px; }
+.fab {
+  width: 100%; padding: 15px;
+  background: linear-gradient(135deg, var(--pink2), var(--pink));
+  color: #fff; border: none; border-radius: 12px;
+  font-family: var(--sans); font-size: 15px; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: 0 4px 24px rgba(224,82,154,.35);
+  transition: all .15s; -webkit-tap-highlight-color: transparent;
+}
+.fab:active:not(:disabled) { transform: scale(.98); opacity: .9; }
+.fab:disabled { background: var(--card2); color: var(--text3); box-shadow: none; cursor: not-allowed; }
+.fab .spin { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: rotate .65s linear infinite; display: none; flex-shrink: 0; }
+@keyframes rotate { to { transform: rotate(360deg); } }
 
-  .spinner {
-    width: 14px; height: 14px;
-    border: 2px solid currentColor; border-top-color: transparent;
-    border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* Form */
-  .form-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 16px; padding: 22px; margin-top: 18px; display: none;
-    box-shadow: 0 2px 16px rgba(224,82,154,0.08);
-  }
-
-  .form-card h3 {
-    font-size: 12px; font-family: var(--mono); color: var(--text2);
-    letter-spacing: 1px; text-transform: uppercase;
-    margin-bottom: 16px; padding-bottom: 10px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .doc-type-row { display: flex; gap: 8px; margin-bottom: 16px; }
-  .doc-type-btn {
-    flex: 1; padding: 8px; border-radius: 10px;
-    border: 1px solid var(--border); background: var(--surface2);
-    color: var(--text2); font-family: var(--mono); font-size: 11px;
-    cursor: pointer; text-align: center; transition: all 0.15s;
-  }
-  .doc-type-btn.active {
-    border-color: var(--accent); background: rgba(224,82,154,0.1); color: var(--accent);
-  }
-
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .form-group { display: flex; flex-direction: column; gap: 5px; }
-  .form-group.full { grid-column: 1 / -1; }
-
-  label { font-size: 11px; font-family: var(--mono); color: var(--text2); letter-spacing: 0.5px; text-transform: uppercase; }
-
-  input, select, textarea {
-    background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 10px; color: var(--text);
-    font-family: var(--sans); font-size: 14px;
-    padding: 9px 12px; outline: none;
-    transition: border-color 0.15s; width: 100%;
-  }
-  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
-  select option { background: #fff; }
-  textarea { resize: vertical; min-height: 60px; }
-
-  .btn-row { display: flex; gap: 10px; margin-top: 18px; }
-  .btn-submit {
-    flex: 1; padding: 12px; border-radius: 10px; border: none;
-    font-family: var(--sans); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;
-  }
-  .btn-submit.primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; box-shadow: 0 3px 12px rgba(224,82,154,0.25); }
-  .btn-submit.secondary { background: var(--surface2); border: 1px solid var(--border); color: var(--text2); }
-  .btn-submit:hover { opacity: 0.88; }
-  .btn-submit:disabled { opacity: 0.4; cursor: not-allowed; }
-
-  /* Result */
-  .result-card {
-    background: rgba(34,197,94,0.06); border: 1px solid rgba(34,197,94,0.2);
-    border-radius: 12px; padding: 14px 16px; margin-top: 14px;
-    display: none; font-size: 13px; color: #15803d; line-height: 1.8;
-  }
-  .result-card a { color: var(--accent); }
-
-  /* History */
-  .history-section { margin-top: 24px; border-top: 1px solid var(--border); padding-top: 18px; }
-  .history-section h3 { font-size: 11px; font-family: var(--mono); color: var(--text2); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; }
-  .history-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 12px; background: var(--surface);
-    border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; font-size: 13px;
-  }
-  .history-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .history-dot.ok { background: var(--success); }
-  .history-dot.dup { background: var(--warning); }
-  .history-vendor { font-weight: 500; flex: 1; }
-  .history-amount { font-family: var(--mono); font-size: 12px; color: var(--text2); }
-  .history-tag { font-family: var(--mono); font-size: 10px; padding: 2px 7px; border-radius: 6px; background: var(--surface2); color: var(--text2); }
-
-  @media (max-width: 480px) {
-    .form-grid { grid-template-columns: 1fr; }
-    .form-group.full { grid-column: 1; }
-  }
-
-  /* ─── PIN SCREEN ─── */
-  #pinScreen {
-    position: fixed; inset: 0; z-index: 9999;
-    background: var(--bg);
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    padding: 32px 24px;
-  }
-  .pin-logo { font-size: 48px; margin-bottom: 16px; }
-  .pin-title { font-size: 20px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
-  .pin-sub { font-size: 13px; color: var(--text2); margin-bottom: 8px; text-align: center; }
-  .pin-step { font-size: 11px; font-family: var(--mono); color: var(--accent); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 24px; min-height: 16px; }
-  .pin-dots { display: flex; gap: 12px; margin-bottom: 28px; }
-  .pin-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--border); background: transparent; transition: all .15s; }
-  .pin-dot.filled { background: var(--accent); border-color: var(--accent); transform: scale(1.1); }
-  .pin-dot.error { background: #ef4444; border-color: #ef4444; animation: shake .35s ease; }
-  @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
-  .numpad { display: grid; grid-template-columns: repeat(3,70px); grid-template-rows: repeat(4,70px); gap: 10px; }
-  .num-btn { width: 70px; height: 70px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); color: var(--text); font-size: 22px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .12s; font-family: var(--sans); -webkit-tap-highlight-color: transparent; }
-  .num-btn:active { background: var(--surface2); transform: scale(.93); }
-  .num-btn.del { background: transparent; border-color: transparent; color: var(--text2); font-size: 18px; }
-  .num-btn.empty { visibility: hidden; }
-  .pin-err { margin-top: 16px; font-size: 12px; color: #ef4444; font-family: var(--mono); min-height: 18px; text-align: center; }
-  #appContent { display: none; }
-
-  /* ─── SETTINGS DRAWER ─── */
-  .drawer-overlay { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,.4); opacity: 0; pointer-events: none; transition: opacity .25s; }
-  .drawer-overlay.open { opacity: 1; pointer-events: auto; }
-  .drawer { position: fixed; top: 0; right: 0; bottom: 0; z-index: 400; width: min(300px,90vw); background: var(--surface); border-left: 1px solid var(--border); transform: translateX(100%); transition: transform .28s cubic-bezier(.4,0,.2,1); overflow-y: auto; padding: 0 0 32px; }
-  .drawer.open { transform: translateX(0); }
-  .drawer-header { padding: 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--surface); }
-  .drawer-header span { font-size: 14px; font-weight: 600; color: var(--text); }
-  .drawer-close { width: 28px; height: 28px; border-radius: 6px; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; color: var(--text2); }
-  .drawer-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
-  .drawer-label { font-size: 10px; font-family: var(--mono); color: var(--text2); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; display: block; }
-  .drawer-input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; color: var(--text); font-size: 13px; font-family: var(--sans); outline: none; }
-  .drawer-input:focus { border-color: var(--accent); }
-  .drawer-save { width: 100%; padding: 10px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: var(--sans); cursor: pointer; }
-  .drawer-pin { width: 100%; padding: 10px; background: var(--surface2); color: var(--text2); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-family: var(--sans); cursor: pointer; margin-top: 4px; }
-  .gear-btn { width: 34px; height: 34px; border-radius: 8px; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; flex-shrink: 0; margin-left: auto; }
+.toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(10px); background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 9px 18px; font-size: 13px; white-space: nowrap; opacity: 0; pointer-events: none; transition: all .22s; z-index: 999; color: var(--text); }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.ok   { border-color: var(--green); color: var(--green); }
+.toast.fail { border-color: var(--red); color: var(--red); }
 </style>
 </head>
 <body>
 
-<!-- PIN SCREEN -->
+<!-- PIN -->
 <div id="pinScreen">
   <div class="pin-logo">💝</div>
   <div class="pin-title">Personal Expenses</div>
@@ -313,8 +234,8 @@
   <div class="pin-err" id="pinErr"></div>
 </div>
 
-<!-- SETTINGS DRAWER -->
-<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<!-- DRAWER -->
+<div class="drawer-overlay" id="overlay" onclick="closeDrawer()"></div>
 <div class="drawer" id="drawer">
   <div class="drawer-header">
     <span>⚙️ Settings</span>
@@ -322,425 +243,129 @@
   </div>
   <div class="drawer-body">
     <div>
-      <label class="drawer-label">Claude API Key</label>
-      <input class="drawer-input" type="password" id="inApiKey" placeholder="sk-ant-...">
+      <label class="field-label">Claude API Key</label>
+      <input class="field-input" type="password" id="inApiKey" placeholder="sk-ant-...">
     </div>
     <div>
-      <label class="drawer-label">Apps Script URL</label>
-      <input class="drawer-input" type="url" id="inScriptUrl" placeholder="https://script.google.com/...">
+      <label class="field-label">Apps Script URL</label>
+      <input class="field-input" type="url" id="inScriptUrl" placeholder="https://script.google.com/...">
     </div>
-    <button class="drawer-save" onclick="saveSettings()">Save</button>
-    <button class="drawer-pin" onclick="closeDrawer();resetPin()">🔐 Change PIN</button>
+    <button class="btn-save" onclick="saveConfig()">Save</button>
+    <button class="btn-pin" onclick="closeDrawer();resetPin()">🔐 Change PIN</button>
   </div>
 </div>
 
-<!-- APP CONTENT -->
+<!-- APP -->
 <div id="appContent">
-<div class="container">
 
-  <header>
+<div class="topbar">
+  <div class="topbar-left">
     <div class="logo">💝</div>
     <div>
       <h1>Personal Expenses</h1>
-      <p>AI-powered receipt scanner</p>
-    </div>
-    <span class="badge">PERSONAL</span>
-    <div class="gear-btn" onclick="openDrawer()">⚙️</div>
-  </header>
-
-  <div class="upload-zone" id="dropZone">
-    <input type="file" id="fileInput" accept="image/*" multiple>
-    <div class="upload-icon">🧾</div>
-    <h2>อัปโหลดใบเสร็จ</h2>
-    <p>คลิกหรือลากไฟล์มาวาง · เลือกได้หลายใบ</p>
-  </div>
-  <div class="queue-info" id="queueInfo"></div>
-
-  <div id="preview-container">
-    <span class="preview-label">PREVIEW</span>
-    <img id="preview-img" src="" alt="preview">
-  </div>
-
-  <button class="btn-scan" id="btnScan">
-    <span>✨</span> สแกนด้วย AI
-  </button>
-
-  <div class="status-bar" id="statusBar">
-    <div class="spinner" id="spinner"></div>
-    <span id="statusText"></span>
-  </div>
-
-  <!-- Form -->
-  <div class="form-card" id="formCard">
-    <h3>📋 ข้อมูลจากใบเสร็จ</h3>
-
-    <div class="doc-type-row">
-      <div class="doc-type-btn active" data-type="receipt" onclick="setDocType('receipt')">🧾 Receipt</div>
-      <div class="doc-type-btn" data-type="invoice" onclick="setDocType('invoice')">📑 Invoice</div>
-      <div class="doc-type-btn" data-type="both" onclick="setDocType('both')">📋 Both</div>
-    </div>
-
-    <div class="form-grid">
-      <div class="form-group">
-        <label>Date</label>
-        <input type="date" id="fDate">
-      </div>
-      <div class="form-group">
-        <label>Invoice #</label>
-        <input type="text" id="fInvoiceNum" placeholder="ถ้ามี">
-      </div>
-      <div class="form-group full">
-        <label>Vendor / Supplier</label>
-        <input type="text" id="fVendor" placeholder="ชื่อร้าน / บริษัท">
-      </div>
-      <div class="form-group">
-        <label>Category</label>
-        <select id="fCategory">
-          <option value="">-- เลือก --</option>
-          <option>Groceries</option>
-          <option>Food & Beverage</option>
-          <option>Home</option>
-          <option>Utilities</option>
-          <option>School Kid</option>
-          <option>Activity</option>
-          <option>Entertain</option>
-          <option>Shopping</option>
-          <option>Online Shopping</option>
-          <option>Transport</option>
-          <option>Health</option>
-          <option>Other</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Payment Method</label>
-        <select id="fPayment">
-          <option value="">-- เลือก --</option>
-          <option>Credit Card</option>
-          <option>Debit Card</option>
-          <option>Cash</option>
-          <option>Interac e-Transfer</option>
-          <option>Online Payment</option>
-        </select>
-      </div>
-      <div class="form-group full">
-        <label>Description</label>
-        <input type="text" id="fDesc" placeholder="รายละเอียดสินค้า/บริการ">
-      </div>
-      <div class="form-group">
-        <label>Pre-Tax (CAD)</label>
-        <input type="number" id="fPreTax" step="0.01" placeholder="0.00">
-      </div>
-      <div class="form-group">
-        <label>GST / HST</label>
-        <input type="number" id="fTax" step="0.01" placeholder="0.00">
-      </div>
-      <div class="form-group full">
-        <label>Total (CAD)</label>
-        <input type="number" id="fTotal" step="0.01" placeholder="0.00" style="font-size:16px;font-weight:600;">
-      </div>
-      <div class="form-group full">
-        <label>Notes</label>
-        <textarea id="fNotes" placeholder="หมายเหตุ (ถ้ามี)"></textarea>
-      </div>
-    </div>
-
-    <div class="btn-row">
-      <button class="btn-submit secondary" onclick="resetAll()">↺ เริ่มใหม่</button>
-      <button class="btn-submit primary" id="btnSubmit" onclick="submitToSheet()">💾 บันทึกลง Sheet</button>
+      <p>Receipt &amp; Invoice Scanner</p>
     </div>
   </div>
-
-  <div class="result-card" id="resultCard"></div>
-
-  <div class="history-section" id="historySection" style="display:none">
-    <h3>💝 รายการที่บันทึกแล้ว</h3>
-    <div id="historyList"></div>
-  </div>
-
+  <div class="gear-btn" onclick="openDrawer()">⚙️</div>
 </div>
 
-<script>
-const APPS_SCRIPT_URL = localStorage.getItem('personal_script_url') || '';
-const ANTHROPIC_API_KEY = localStorage.getItem('personal_api_key') || '';
+<div class="main">
+  <div class="upload-zone" id="dropZone">
+    <input type="file" id="fileInput" multiple accept="image/*,application/pdf" onchange="addFiles(this.files)">
+    <div class="upload-icon">🧾</div>
+    <div class="upload-title">Tap to select files</div>
+    <div class="upload-sub">Multiple images / PDF at once</div>
+    <div class="upload-badge">JPG · PNG · PDF</div>
+  </div>
 
-let currentFile = null;
-let currentBase64 = null;
-let docType = 'receipt';
-let fileQueue = [];
-let currentQueueIndex = 0;
-let sessionHistory = [];
-
-function setDocType(type) {
-  docType = type;
-  document.querySelectorAll('.doc-type-btn').forEach(b => b.classList.toggle('active', b.dataset.type === type));
-}
-
-document.getElementById('fileInput').addEventListener('change', e => {
-  if (e.target.files.length > 0) handleFiles(Array.from(e.target.files));
-});
-
-const dropZone = document.getElementById('dropZone');
-dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-dropZone.addEventListener('drop', e => {
-  e.preventDefault(); dropZone.classList.remove('drag-over');
-  if (e.dataTransfer.files.length > 0) handleFiles(Array.from(e.dataTransfer.files));
-});
-
-function handleFiles(files) {
-  fileQueue = files;
-  currentQueueIndex = 0;
-  loadFileFromQueue(0);
-}
-
-function loadFileFromQueue(index) {
-  if (index >= fileQueue.length) return;
-  const file = fileQueue[index];
-  currentFile = file;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    currentBase64 = ev.target.result.split(',')[1];
-    document.getElementById('preview-img').src = ev.target.result;
-    document.getElementById('preview-container').style.display = 'block';
-    document.getElementById('btnScan').style.display = 'flex';
-    document.getElementById('formCard').style.display = 'none';
-    document.getElementById('resultCard').style.display = 'none';
-    if (fileQueue.length > 1) {
-      const qi = document.getElementById('queueInfo');
-      qi.style.display = 'block';
-      qi.textContent = `ใบที่ ${index + 1} จาก ${fileQueue.length} ใบ`;
-      setStatus('info', `ใบที่ ${index + 1}/${fileQueue.length} — กด สแกนด้วย AI`);
-      document.getElementById('spinner').style.display = 'none';
-    } else {
-      document.getElementById('queueInfo').style.display = 'none';
-      setStatus('', '');
-    }
-  };
-  reader.readAsDataURL(file);
-}
-
-function setStatus(type, msg) {
-  const bar = document.getElementById('statusBar');
-  const spin = document.getElementById('spinner');
-  if (!type) { bar.style.display = 'none'; return; }
-  bar.className = 'status-bar ' + type;
-  bar.style.display = 'flex';
-  spin.style.display = type === 'info' ? 'block' : 'none';
-  document.getElementById('statusText').textContent = msg;
-}
-
-// === SCAN ===
-document.getElementById('btnScan').addEventListener('click', async () => {
-  if (!currentBase64) return;
-  const btn = document.getElementById('btnScan');
-  btn.disabled = true;
-  setStatus('info', 'กำลังวิเคราะห์ใบเสร็จด้วย AI...');
-
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: currentFile.type || 'image/jpeg', data: currentBase64 } },
-            { type: 'text', text: `Extract receipt/invoice data and return ONLY valid JSON (no markdown):
-{
-  "date": "YYYY-MM-DD",
-  "invoice_number": "",
-  "vendor": "",
-  "description": "",
-  "pre_tax": 0.00,
-  "tax": 0.00,
-  "total": 0.00,
-  "payment_method": "",
-  "doc_type": "receipt|invoice|both",
-  "category": "Groceries|Food & Beverage|Home|Utilities|School Kid|Activity|Entertain|Shopping|Online Shopping|Transport|Health|Other",
-  "notes": ""
-}
-Use actual date from document. For category, pick the most fitting one from the list.` }
-          ]
-        }]
-      })
-    });
-
-    const data = await res.json();
-    const parsed = JSON.parse(data.content[0].text.trim().replace(/```json|```/g, '').trim());
-
-    document.getElementById('fDate').value = parsed.date || '';
-    document.getElementById('fInvoiceNum').value = parsed.invoice_number || '';
-    document.getElementById('fVendor').value = parsed.vendor || '';
-    document.getElementById('fDesc').value = parsed.description || '';
-    document.getElementById('fPreTax').value = parsed.pre_tax || '';
-    document.getElementById('fTax').value = parsed.tax || '';
-    document.getElementById('fTotal').value = parsed.total || '';
-    document.getElementById('fPayment').value = parsed.payment_method || '';
-    document.getElementById('fNotes').value = parsed.notes || '';
-    if (parsed.category) document.getElementById('fCategory').value = parsed.category;
-    if (parsed.doc_type) setDocType(parsed.doc_type);
-
-    document.getElementById('formCard').style.display = 'block';
-    setStatus('success', '✓ AI อ่านข้อมูลสำเร็จ — ตรวจสอบก่อนบันทึก');
-
-  } catch (err) {
-    setStatus('error', '✗ ' + err.message);
-  }
-  btn.disabled = false;
-});
-
-// === SUBMIT ===
-async function submitToSheet() {
-  const btn = document.getElementById('btnSubmit');
-  btn.disabled = true;
-
-  const payload = {
-    action: 'addReceipt',
-    date: document.getElementById('fDate').value,
-    invoice_number: document.getElementById('fInvoiceNum').value,
-    vendor: document.getElementById('fVendor').value,
-    category: document.getElementById('fCategory').value,
-    description: document.getElementById('fDesc').value,
-    pre_tax: document.getElementById('fPreTax').value,
-    tax: document.getElementById('fTax').value,
-    total: document.getElementById('fTotal').value,
-    payment_method: document.getElementById('fPayment').value,
-    notes: document.getElementById('fNotes').value,
-    doc_type: docType,
-    image_base64: currentBase64 || '',
-    image_mime: currentFile ? currentFile.type : 'image/jpeg',
-    image_filename: currentFile ? currentFile.name : 'receipt.jpg'
-  };
-
-  try {
-    setStatus('info', 'กำลังบันทึกและอัปโหลดรูป...');
-    const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-    const text = await res.text();
-    let result;
-    try { result = JSON.parse(text.replace(/```json|```/g,'').trim()); }
-    catch(e) { throw new Error('Response: ' + text.substring(0,200)); }
-
-    if (result && result.status === 'ok') {
-      const isNew = result.action === 'inserted';
-      setStatus('success', isNew ? '✓ บันทึกแถวใหม่สำเร็จ!' : '✓ อัปเดตแถวเดิมสำเร็จ!');
-      document.getElementById('resultCard').style.display = 'block';
-      document.getElementById('resultCard').innerHTML = `
-        <strong>${isNew ? '🆕 เพิ่มแถวใหม่สำเร็จ' : '🔄 อัปเดตแถวเดิม'}</strong><br>
-        Vendor: ${payload.vendor}<br>
-        Date: ${payload.date}<br>
-        Total: $${payload.total} CAD<br>
-        Category: ${payload.category}<br>
-        ${result.file_url ? '📎 <a href="' + result.file_url + '" target="_blank">ดูรูปใน Drive ↗</a>' : ''}
-      `;
-      sessionHistory.unshift({ vendor: payload.vendor, total: payload.total, isNew });
-      renderHistory();
-
-      // โหลดใบถัดไปอัตโนมัติ
-      currentQueueIndex++;
-      if (currentQueueIndex < fileQueue.length) {
-        setTimeout(() => {
-          loadFileFromQueue(currentQueueIndex);
-          document.getElementById('formCard').style.display = 'none';
-          document.getElementById('resultCard').style.display = 'none';
-        }, 1500);
-      }
-    } else {
-      setStatus('error', '✗ ' + (result ? result.message : 'ไม่ได้รับ response'));
-    }
-  } catch (err) {
-    setStatus('error', '✗ ' + err.message);
-  }
-  btn.disabled = false;
-}
-
-function renderHistory() {
-  if (!sessionHistory.length) return;
-  document.getElementById('historySection').style.display = 'block';
-  document.getElementById('historyList').innerHTML = sessionHistory.map(h => `
-    <div class="history-item">
-      <div class="history-dot ${h.isNew ? 'ok' : 'dup'}"></div>
-      <span class="history-vendor">${h.vendor}</span>
-      <span class="history-amount">$${parseFloat(h.total).toFixed(2)}</span>
-      <span class="history-tag">${h.isNew ? 'NEW' : 'UPDATED'}</span>
+  <div id="queueWrap" style="display:none">
+    <div class="section-label">
+      Queue <span class="badge" id="qBadge">0</span>
     </div>
-  `).join('');
-}
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;" id="qList"></div>
+  </div>
 
-function resetAll() {
-  currentFile = null; currentBase64 = null;
-  fileQueue = []; currentQueueIndex = 0;
-  document.getElementById('fileInput').value = '';
-  document.getElementById('preview-container').style.display = 'none';
-  document.getElementById('btnScan').style.display = 'none';
-  document.getElementById('formCard').style.display = 'none';
-  document.getElementById('resultCard').style.display = 'none';
-  document.getElementById('queueInfo').style.display = 'none';
-  setStatus('', '');
-  setDocType('receipt');
-}
+  <div class="summary" id="summary">
+    <div class="summary-title">Results</div>
+    <div class="summary-grid">
+      <div class="stat"><div class="stat-n g" id="sInsert">0</div><div class="stat-l">Added</div></div>
+      <div class="stat"><div class="stat-n y" id="sUpdate">0</div><div class="stat-l">Updated</div></div>
+      <div class="stat"><div class="stat-n d" id="sSkip">0</div><div class="stat-l">Skipped</div></div>
+      <div class="stat"><div class="stat-n r" id="sError">0</div><div class="stat-l">Error</div></div>
+    </div>
+  </div>
+</div>
 
-// ─── PIN ───────────────────────────────────────────────────
+<div class="fab-wrap">
+  <button class="fab" id="fabBtn" onclick="runAll()" disabled>
+    <span class="spin" id="fabSpin"></span>
+    <span id="fabLabel">Select files first</span>
+  </button>
+</div>
+
+</div><!-- /appContent -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── CATEGORIES ───────────────────────────────────────────────
+const CATS = [
+  "Groceries","Food & Beverage","Home","Utilities",
+  "School Kid","Activity","Entertain","Shopping",
+  "Online Shopping","Transport","Health","Other"
+];
+
+// ─── STATE ────────────────────────────────────────────────────
+let queue = [], running = false;
+const stats = { insert:0, update:0, skip:0, error:0 };
+const LS = { KEY:'personal_api_key', URL:'personal_script_url' };
+
+// ─── PIN ──────────────────────────────────────────────────────
 const PIN_KEY = 'personal_pin_hash', PIN_LEN = 6;
 let pinBuffer = '', pinSetupStep = 0, pinTemp = '';
 
 function hashPin(p) { let h=0; for(let i=0;i<p.length;i++) h=Math.imul(31,h)+p.charCodeAt(i)|0; return h.toString(36)+p.length; }
-
 function initPin() { localStorage.getItem(PIN_KEY) ? showPinEntry() : startPinSetup(); }
 
 function showPinEntry() {
   pinBuffer=''; pinSetupStep=0;
   document.getElementById('pinStep').textContent='';
-  document.getElementById('pinSub') && (document.getElementById('pinSub').textContent='กรอก PIN 6 หลักเพื่อเข้าใช้งาน');
+  document.getElementById('pinSub') && (document.getElementById('pinSub') && null);
   updateDots();
 }
-
 function startPinSetup() {
   pinBuffer=''; pinSetupStep=1; pinTemp='';
   document.getElementById('pinStep').textContent='Set New PIN';
   document.getElementById('pinErr').textContent='';
   updateDots();
 }
-
 function pinPress(d) { if(pinBuffer.length>=PIN_LEN) return; pinBuffer+=d; updateDots(); if(pinBuffer.length===PIN_LEN) setTimeout(handlePin,120); }
 function pinDel() { if(!pinBuffer.length) return; pinBuffer=pinBuffer.slice(0,-1); updateDots(); }
-
 function updateDots() {
   for(let i=0;i<PIN_LEN;i++){
     const d=document.getElementById('pd'+i);
     d.classList.toggle('filled',i<pinBuffer.length); d.classList.remove('error');
   }
 }
-
 function pinError(msg) {
   for(let i=0;i<PIN_LEN;i++) document.getElementById('pd'+i).classList.add('error');
   document.getElementById('pinErr').textContent=msg;
   setTimeout(()=>{ pinBuffer=''; updateDots(); document.getElementById('pinErr').textContent=''; },900);
 }
-
 function handlePin() {
   const stored=localStorage.getItem(PIN_KEY);
   if(pinSetupStep===1){ pinTemp=pinBuffer; pinBuffer=''; pinSetupStep=2; document.getElementById('pinStep').textContent='Confirm PIN'; updateDots(); }
   else if(pinSetupStep===2){
     if(pinBuffer===pinTemp){ localStorage.setItem(PIN_KEY,hashPin(pinBuffer)); unlockApp(); }
-    else { pinError('PIN ไม่ตรงกัน'); pinTemp=''; pinSetupStep=1; document.getElementById('pinStep').textContent='Set New PIN'; }
+    else { pinError('PIN does not match'); pinTemp=''; pinSetupStep=1; document.getElementById('pinStep').textContent='Set New PIN'; }
   } else {
-    hashPin(pinBuffer)===stored ? unlockApp() : pinError('PIN ไม่ถูกต้อง');
+    hashPin(pinBuffer)===stored ? unlockApp() : pinError('Incorrect PIN');
   }
 }
-
 function unlockApp() {
   document.getElementById('pinScreen').style.display='none';
   document.getElementById('appContent').style.display='block';
-  loadSettings();
+  loadConfig();
 }
-
 function resetPin() {
   localStorage.removeItem(PIN_KEY);
   document.getElementById('appContent').style.display='none';
@@ -748,22 +373,203 @@ function resetPin() {
   startPinSetup();
 }
 
-// ─── SETTINGS ──────────────────────────────────────────────
-function loadSettings() {
-  document.getElementById('inApiKey').value = localStorage.getItem('personal_api_key')||'';
-  document.getElementById('inScriptUrl').value = localStorage.getItem('personal_script_url')||'';
+// ─── CONFIG ───────────────────────────────────────────────────
+function loadConfig() {
+  document.getElementById('inApiKey').value    = localStorage.getItem(LS.KEY)||'';
+  document.getElementById('inScriptUrl').value = localStorage.getItem(LS.URL)||'';
 }
-function saveSettings() {
-  localStorage.setItem('personal_api_key', document.getElementById('inApiKey').value.trim());
-  localStorage.setItem('personal_script_url', document.getElementById('inScriptUrl').value.trim());
+function saveConfig() {
+  localStorage.setItem(LS.KEY, document.getElementById('inApiKey').value.trim());
+  localStorage.setItem(LS.URL, document.getElementById('inScriptUrl').value.trim());
   closeDrawer();
+  toast('Saved ✓','ok');
 }
-function openDrawer() { document.getElementById('drawer').classList.add('open'); document.getElementById('drawerOverlay').classList.add('open'); }
-function closeDrawer() { document.getElementById('drawer').classList.remove('open'); document.getElementById('drawerOverlay').classList.remove('open'); }
+function openDrawer()  { document.getElementById('drawer').classList.add('open'); document.getElementById('overlay').classList.add('open'); }
+function closeDrawer() { document.getElementById('drawer').classList.remove('open'); document.getElementById('overlay').classList.remove('open'); }
 
-// ─── INIT ──────────────────────────────────────────────────
+// ─── FILES ────────────────────────────────────────────────────
+function addFiles(files) {
+  for(const f of files) queue.push({file:f, status:'pending', detail:'Waiting', thumb:null});
+  document.getElementById('fileInput').value='';
+  renderQueue(); updateFab();
+}
+
+function renderQueue() {
+  const wrap = document.getElementById('queueWrap');
+  wrap.style.display = queue.length ? 'flex' : 'none';
+  if(queue.length) wrap.style.flexDirection='column';
+  document.getElementById('qBadge').textContent = queue.length;
+  document.getElementById('qList').innerHTML = queue.map((q,i) => `
+    <div class="queue-item ${q.status}" id="qi${i}">
+      <div class="thumb" id="th${i}">${q.thumb ? `<img src="${q.thumb}">` : (q.file.name.match(/pdf/i)?'📄':'🧾')}</div>
+      <div class="item-body">
+        <div class="item-name">${q.file.name}</div>
+        <div class="item-sub ${subClass(q.status)}" id="qs${i}">${q.detail}</div>
+      </div>
+      <div class="dot-status ${q.status}" id="qd${i}"></div>
+    </div>`).join('');
+  queue.forEach((q,i) => {
+    if(!q.thumb && q.file.type.startsWith('image/')) {
+      const r = new FileReader();
+      r.onload = e => { q.thumb=e.target.result; const el=document.getElementById('th'+i); if(el) el.innerHTML=`<img src="${e.target.result}">`; };
+      r.readAsDataURL(q.file);
+    }
+  });
+}
+
+function updateQItem(i, status, detail) {
+  queue[i].status=status; queue[i].detail=detail;
+  const card=document.getElementById('qi'+i);
+  const sub=document.getElementById('qs'+i);
+  const dot=document.getElementById('qd'+i);
+  if(card) card.className=`queue-item ${status}`;
+  if(sub)  { sub.className=`item-sub ${subClass(status)}`; sub.textContent=detail; }
+  if(dot)  dot.className=`dot-status ${status}`;
+}
+function subClass(s) { return {pending:'dim',processing:'warn',done:'ok',skipped:'dim',error:'err'}[s]||'dim'; }
+function updateFab() {
+  const p = queue.filter(q=>q.status==='pending').length;
+  const btn = document.getElementById('fabBtn');
+  btn.disabled = p===0||running;
+  document.getElementById('fabLabel').textContent = running?'Processing...':(p?`Submit ${p} file${p>1?'s':''} to Sheet`:'Done');
+}
+
+// ─── MAIN PROCESS ─────────────────────────────────────────────
+async function runAll() {
+  const apiKey    = localStorage.getItem(LS.KEY)||'';
+  const scriptUrl = localStorage.getItem(LS.URL)||'';
+  if(!apiKey)    return toast('Add Claude API Key in ⚙️ first','fail');
+  if(!scriptUrl) return toast('Add Apps Script URL in ⚙️ first','fail');
+
+  running=true; stats.insert=stats.update=stats.skip=stats.error=0;
+  document.getElementById('fabSpin').style.display='block';
+  document.getElementById('summary').classList.remove('show');
+  updateFab();
+
+  for(let i=0; i<queue.length; i++){
+    if(queue[i].status!=='pending') continue;
+    try {
+      updateQItem(i,'processing','Reading file...');
+      const b64full = await readBase64(queue[i].file);
+      const b64     = b64full.split(',')[1];
+      const mime    = queue[i].file.type || 'image/jpeg';
+
+      updateQItem(i,'processing','AI analyzing...');
+      const extracted = await callClaude(apiKey, b64, mime);
+
+      updateQItem(i,'processing','Saving to Sheet...');
+      const dateStr  = extracted.date || ym(new Date().toISOString().slice(0,10));
+      const vendor   = extracted.vendor || 'Unknown';
+      const docLabel = extracted.doc_type === 'invoice' ? 'Invoice' : 'Receipt';
+      const ext      = mime.includes('pdf') ? 'pdf' : 'jpg';
+      const fileName = `${dateStr}_${safe(vendor)}_${docLabel}.${ext}`;
+
+      const payload = {
+        ...extracted,
+        image_base64: b64,
+        image_mime: mime,
+        image_filename: fileName
+      };
+
+      const res = await fetch(scriptUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      });
+      const result = await res.json();
+
+      if(result.status !== 'ok') throw new Error(result.message || 'Save failed');
+
+      if     (result.action==='updated')  { stats.update++; updateQItem(i,'done',    `Updated row ${result.row} ✓`); }
+      else if(result.action==='inserted') { stats.insert++; updateQItem(i,'done',    `Added row ${result.row} ✓`); }
+      else                                { stats.skip++;   updateQItem(i,'skipped', `Skipped (duplicate)`); }
+
+    } catch(err) { stats.error++; updateQItem(i,'error', err.message||'Error'); }
+  }
+
+  running=false;
+  document.getElementById('fabSpin').style.display='none';
+  updateFab(); showSummary(); toast('Done!','ok');
+}
+
+// ─── CLAUDE ───────────────────────────────────────────────────
+async function callClaude(apiKey, b64, mime) {
+  const prompt = `You are a receipt/invoice data extractor for personal expenses in Canada.
+Analyze the image and return ONLY a valid JSON object — no markdown, no explanation.
+
+Available categories: ${CATS.join(', ')}
+
+Return exactly this JSON:
+{
+  "date":           "YYYY-MM-DD or empty string",
+  "invoice_number": "invoice or receipt number or empty string",
+  "vendor":         "vendor or store name",
+  "category":       "one category from the list above",
+  "description":    "brief description of purchase",
+  "pre_tax":        "pre-tax amount as numeric string e.g. 45.00",
+  "tax":            "tax amount as numeric string",
+  "total":          "total amount as numeric string",
+  "payment_method": "Cash / Credit Card / Debit / Interac / Online Payment / Other",
+  "doc_type":       "receipt or invoice",
+  "notes":          "any relevant notes or empty string"
+}
+
+Rules:
+- Always return a single JSON object
+- Ontario HST = 13% if not shown separately
+- Pick the closest category from the list only
+- doc_type: use invoice if header says INVOICE, otherwise receipt`;
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-opus-4-5', max_tokens: 1024,
+      messages: [{ role: 'user', content: [
+        { type: 'image', source: { type: 'base64', media_type: mime, data: b64 } },
+        { type: 'text', text: prompt }
+      ]}]
+    })
+  });
+
+  if(!res.ok) { const e=await res.json(); throw new Error('Claude: '+(e.error?.message||res.status)); }
+  const data = await res.json();
+  const raw  = (data.content?.[0]?.text||'').replace(/```json|```/g,'').trim();
+  return JSON.parse(raw);
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────
+function readBase64(file) {
+  return new Promise((res,rej) => { const r=new FileReader(); r.onload=e=>res(e.target.result); r.onerror=()=>rej(new Error('Cannot read file')); r.readAsDataURL(file); });
+}
+function ym(d) { return d ? d.slice(0,7) : new Date().toISOString().slice(0,7); }
+function safe(str) { return (str||'Unknown').replace(/[^\w\u0E00-\u0E7F\s]/g,'').replace(/\s+/g,'_').slice(0,30); }
+function showSummary() {
+  document.getElementById('sInsert').textContent = stats.insert;
+  document.getElementById('sUpdate').textContent = stats.update;
+  document.getElementById('sSkip').textContent   = stats.skip;
+  document.getElementById('sError').textContent  = stats.error;
+  document.getElementById('summary').classList.add('show');
+}
+function toast(msg, type) {
+  const el=document.getElementById('toast'); el.textContent=msg;
+  el.className=`toast show ${type}`; clearTimeout(el._t);
+  el._t=setTimeout(()=>el.classList.remove('show'),3200);
+}
+
+// ─── DRAG & DROP ──────────────────────────────────────────────
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag'); addFiles(e.dataTransfer.files); });
+
+// ─── INIT ─────────────────────────────────────────────────────
 initPin();
 </script>
-</div><!-- /appContent -->
 </body>
 </html>
