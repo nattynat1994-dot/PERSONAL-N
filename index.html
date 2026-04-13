@@ -510,7 +510,7 @@ Return exactly this JSON:
   "pre_tax":        "pre-tax amount as numeric string e.g. 45.00",
   "tax":            "tax amount as numeric string",
   "total":          "total amount as numeric string",
-  "payment_method": "Cash / Credit Card / Debit / Interac / Online Payment / Other",
+  "payment_method": "Cash / Credit Card / Debit / Interac / e-Transfer / Apple Pay / Google Pay / Online Payment / Other",
   "doc_type":       "receipt or invoice",
   "notes":          "any relevant notes or empty string"
 }
@@ -519,7 +519,14 @@ Rules:
 - Always return a single JSON object
 - Ontario HST = 13% if not shown separately
 - Pick the closest category from the list only
-- doc_type: use invoice if header says INVOICE, otherwise receipt`;
+- doc_type: use invoice if header says INVOICE, otherwise receipt
+
+Payment method rules (in priority order):
+1. If the receipt clearly shows a payment type (VISA, Mastercard, Credit, Debit, Interac, e-Transfer, Apple Pay, Google Pay, Cash, etc.), use exactly what's shown.
+2. If the vendor is an online service (Uber, Uber Eats, Amazon, DoorDash, SkipTheDishes, Netflix, Spotify, etc.), use "Credit Card".
+3. If this is an invoice/bill for utilities (water, electricity, internet, phone, insurance), use "Online Payment".
+4. If the receipt has no payment info shown at all, use "Cash".
+5. If truly unclear, use "Other".`;
 
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
