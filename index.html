@@ -462,7 +462,8 @@ async function runAll() {
       const vendor   = extracted.vendor || 'Unknown';
       const docLabel = extracted.doc_type === 'invoice' ? 'Invoice' : 'Receipt';
       const ext      = mime.includes('pdf') ? 'pdf' : 'jpg';
-      const fileName = `${dateStr}_${safe(vendor)}_${docLabel}.${ext}`;
+      const totalStr = (extracted.total || '0').toString().replace(/[^\d.]/g,'') || '0';
+      const fileName = `${dateStr}_${docLabel}_${totalStr}_${safe(vendor)}.${ext}`;
 
       const payload = {
         ...extracted,
